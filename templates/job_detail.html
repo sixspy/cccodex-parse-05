@@ -1,17 +1,153 @@
 {% extends "base.html" %}
+{% load watermark_extras %}
 {% block title %}{{ job.title }} · {{ lab }}{% endblock %}
 {% block content %}
-<p class="crumb"><a href="/jobs/">← 返回列表</a></p>
+<p class="crumb"><a href="/jobs/">← 返回水位列表</a></p>
 <h1>{{ job.title }}</h1>
+
+<section class="policy-card">
+  <div class="policy-head">
+    <h2>本日推进策略</h2>
+    {% if policy %}
+    <span class="chip chip-locked">已写死 · {{ policy.method_name }}</span>
+    {% else %}
+    <span class="chip chip-open">今日尚未写定</span>
+    {% endif %}
+  </div>
+  {% if not policy %}
+  <form method="post" action="/policy/" class="policy-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="/jobs/{{ job.id }}/" />
+    {% for value, label in method_choices %}
+    <label class="radio"><input type="radio" name="method" value="{{ value }}" required /> {{ label }}</label>
+    {% endfor %}
+    <button type="submit">写定今日推进法</button>
+  </form>
+  {% else %}
+  <p class="hint">今日读盘只能带「{{ policy.method_name }}」；带别的推进法点读盘会被拦住并提示水位尺推进写歪。{% if running %}本任务读盘执行中，推进策略不得改。{% endif %}</p>
+  {% endif %}
+</section>
+
 <dl class="meta">
   <div><dt>编码</dt><dd class="mono">{{ job.code }}</dd></div>
-  <div><dt>状态</dt><dd><span class="chip">{{ job.status }}</span></dd></div>
+  <div><dt>状态</dt><dd><span class="chip">{{ job.status }}</span>{% if running %} <span class="chip chip-run">执行中</span>{% endif %}</dd></div>
   <div><dt>源地址</dt><dd class="mono">{{ job.source_uri }}</dd></div>
-  <div><dt>已解析</dt><dd>{{ job.parsed }}</dd></div>
-  <div><dt>已入库</dt><dd>{{ job.landed }}</dd></div>
+  <div><dt>已解析（上次读盘）</dt><dd class="mono">{{ job.parsed }}</dd></div>
+  <div><dt>已落档</dt><dd class="mono">{{ job.landed }}</dd></div>
 </dl>
-<div class="actions">
-  <form method="post" action="/jobs/{{ job.id }}/parse/">{% csrf_token %}<button type="submit">执行解析</button></form>
-  <form method="post" action="/jobs/{{ job.id }}/land/">{% csrf_token %}<button type="submit" class="secondary">执行入库</button></form>
-</div>
+
+<section class="ruler-board">
+  <h2>水位尺读数</h2>
+  <table class="grid">
+    <thead><tr><th>推进法名</th><th>尺值（原始）</th><th>尺值（可读）</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>{{ method_labels.mtime }}</td>
+        <td class="mono">{{ wm.mtime_ruler }}</td>
+        <td class="mono">{{ wm.mtime_ruler|microtime }}</td>
+      </tr>
+      <tr>
+        <td>{{ method_labels.count }}</td>
+        <td class="mono">{{ wm.count_ruler }}</td>
+        <td class="mono">{{ wm.count_ruler }} 条</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="actions-card">
+  <h2>发起读盘</h2>
+  <form method="post" action="/jobs/{{ job.id }}/parse/" class="parse-form">
+    {% csrf_token %}
+    <div class="field-row">
+      <label>读盘方式
+        <select name="mode" required>
+          <option value="incremental">增量：只收尺位之后的变更</option>
+          <option value="full">全量：可越过水位尺</option>
+        </select>
+      </label>
+      <label>本次推进法
+        <select name="method" required>
+          {% for value, label in method_choices %}
+          <option value="{{ value }}" {% if policy and policy.method == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <label>越尺原因（仅全量必填，增量填写无效）
+      <input type="text" name="reason" maxlength="255" placeholder="全量越过尺位时必须写明原因" />
+    </label>
+    <button type="submit">点读盘</button>
+  </form>
+  <form method="post" action="/jobs/{{ job.id }}/land/" class="land-form">
+    {% csrf_token %}
+    <button type="submit" class="secondary">执行入库落档</button>
+  </form>
+</section>
+
+<details class="fold" open>
+  <summary>推进轨迹（{{ tracks|length }}）</summary>
+  {% if tracks %}
+  <table class="grid">
+    <thead><tr><th>#</th><th>读盘</th><th>方式</th><th>推进法名</th><th>尺位前</th><th>尺位后</th><th>说明</th><th>时刻</th></tr></thead>
+    <tbody>
+    {% for t in tracks %}
+      <tr>
+        <td class="mono">{{ t.id }}</td>
+        <td class="mono">{% if t.run_id %}#{{ t.run_id }}{% else %}—{% endif %}</td>
+        <td>{{ t.mode_name }}</td>
+        <td>{{ t.method_name }}</td>
+        <td class="mono">{{ t.ruler_before }}</td>
+        <td class="mono">{{ t.ruler_after }}</td>
+        <td>{{ t.detail }}</td>
+        <td class="mono">{{ t.created_at|date:"Y-m-d H:i:s" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">尚无推进轨迹。</p>
+  {% endif %}
+</details>
+
+<details class="fold">
+  <summary>争用落败说明（{{ contention_logs|length }}）</summary>
+  {% if contention_logs %}
+  <table class="grid">
+    <thead><tr><th>#</th><th>先到读盘</th><th>落败读盘</th><th>方式</th><th>推进法名</th><th>说明</th><th>时刻</th></tr></thead>
+    <tbody>
+    {% for c in contention_logs %}
+      <tr>
+        <td class="mono">{{ c.id }}</td>
+        <td class="mono">{% if c.winner_id %}#{{ c.winner_id }}{% else %}—{% endif %}</td>
+        <td class="mono">{% if c.loser_run_id %}#{{ c.loser_run_id }}{% else %}—{% endif %}</td>
+        <td>{{ c.mode_name }}</td>
+        <td>{{ c.method_name }}</td>
+        <td>{{ c.detail }}</td>
+        <td class="mono">{{ c.created_at|date:"Y-m-d H:i:s" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">尚无争抢，未出现落败。</p>
+  {% endif %}
+</details>
+
+<details class="fold">
+  <summary>源文件行（{{ source_rows|length }}）</summary>
+  <table class="grid">
+    <thead><tr><th>行序</th><th>编码</th><th>变更时刻</th><th>是否推尺</th></tr></thead>
+    <tbody>
+    {% for row in source_rows %}
+      <tr>
+        <td class="mono">{{ row.seq }}</td>
+        <td class="mono">{% if row.code %}{{ row.code }}{% else %}<span class="blank">（空编码）</span>{% endif %}</td>
+        <td class="mono">{{ row.updated_at|date:"Y-m-d H:i:s" }}</td>
+        <td>{% if row.has_code %}推尺{% else %}<span class="blank">不推尺</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</details>
 {% endblock %}

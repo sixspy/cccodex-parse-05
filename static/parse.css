@@ -40,3 +40,45 @@ button.secondary { background: transparent; color: var(--accent); }
 .meta dt { font-size: .75rem; color: #7a7163; } .meta dd { margin: .15rem 0 0; }
 .actions { display: flex; gap: .8rem; margin-top: 1.5rem; }
 a { color: var(--accent); }
+
+/* 消息条 */
+.notes { max-width: 920px; margin: 1rem auto 0; padding: 0 1.25rem; display: grid; gap: .5rem; }
+.note { padding: .6rem .9rem; border: 1px solid var(--line); background: #fffdf8; font-family: "IBM Plex Sans", sans-serif; font-size: .92rem; }
+.note-success { border-color: #4d7c3f; background: #f1f6ea; }
+.note-error { border-color: #9b2c2c; background: #f8ecec; color: #842626; }
+.note-warning { border-color: #b7791f; background: #faf3e2; color: #8a5a12; }
+
+/* 策略卡 */
+.policy-card { background: #fffdf8; border: 1px solid var(--line); padding: 1rem 1.2rem; margin: 1rem 0 1.4rem; }
+.policy-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.policy-head h2 { font-size: 1.05rem; margin: 0; font-weight: 600; }
+.chip-locked { background: #e7eee2; border-color: #93ad83; }
+.chip-open { background: #f3e8d4; border-color: #c9a86a; }
+.chip-run { background: #f6dfc8; border-color: #c4833f; }
+.policy-form { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: .6rem; }
+.policy-form label.radio { display: inline-flex; align-items: center; gap: .35rem; margin: 0; }
+.policy-form label.radio input { width: auto; margin: 0; }
+.policy-form button { margin-top: 0; }
+
+/* 水位列表 */
+.ruler-link { display: inline-flex; gap: .5rem; align-items: baseline; text-decoration: none; }
+.ruler-link .job-title { font-family: "Source Han Serif SC", serif; color: var(--ink); }
+.ruler-cell a { text-decoration: none; }
+.ruler-cell a:hover { text-decoration: underline; }
+h2 { font-weight: 600; }
+
+/* 详情页 */
+.ruler-board, .actions-card { background: #fffdf8; border: 1px solid var(--line); padding: 1rem 1.2rem; margin: 1.2rem 0; }
+.ruler-board h2, .actions-card h2 { font-size: 1.05rem; margin: 0 0 .8rem; }
+.parse-form label { display: block; }
+.field-row { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+.field-row label { flex: 1 1 220px; }
+select { width: 100%; margin-top: .35rem; padding: .55rem .65rem; border: 1px solid var(--line); background: #fff; font-family: "IBM Plex Sans", sans-serif; }
+.land-form { margin-top: .8rem; }
+.land-form button { margin-top: .4rem; }
+
+/* 折叠区 */
+.fold { background: #fffdf8; border: 1px solid var(--line); padding: .7rem 1rem; margin: 1rem 0; }
+.fold summary { cursor: pointer; font-family: "IBM Plex Sans", sans-serif; font-weight: 600; color: var(--accent); }
+.fold .grid { margin-top: .8rem; }
+.blank { color: #9a8f7d; font-family: "IBM Plex Sans", sans-serif; font-size: .85rem; }

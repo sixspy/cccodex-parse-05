@@ -17,4 +17,4 @@ def test_login_and_list(client):
     r = client.get("/jobs/")
     assert r.status_code == 200
     assert ParseJob.objects.count() >= 1
-    assert "解析任务" in r.content.decode("utf-8")
+    assert "水位尺" in r.content.decode("utf-8")

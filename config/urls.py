@@ -9,4 +9,5 @@ urlpatterns = [
     path("jobs/<int:job_id>/", views.job_detail),
     path("jobs/<int:job_id>/parse/", views.job_parse),
     path("jobs/<int:job_id>/land/", views.job_land),
+    path("policy/", views.policy_set),
 ]

@@ -11,6 +11,13 @@
     <div class="brand">{{ lab }}</div>
     {% if user %}<div class="who">{{ user }} · <a href="/logout">退出</a></div>{% endif %}
   </header>
+  {% if messages %}
+  <div class="notes">
+    {% for message in messages %}
+    <div class="note note-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
   <main class="sheet">{% block content %}{% endblock %}</main>
 </body>
 </html>
